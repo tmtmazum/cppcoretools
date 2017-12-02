@@ -21,6 +21,7 @@ void check_scoped_timer()
   }};
 
   CCT_CHECK(cct::to_string(1s) == "1s ");
+  timer = cct::scoped_timer{ "another scoped" };
   CCT_CHECK(cct::to_string(1s + 1ms) == "1s 1ms ");
   CCT_CHECK(cct::to_string(14s + 3ms + 5ns) == "14s 3ms 5ns");
   CCT_CHECK(cct::to_string(2h + 3ms + 6ns) == "2hr(s) 3ms 6ns");

@@ -65,10 +65,28 @@ public:
     , m_handler{std::move(handler)}
   {}
 
-  ~scoped_timer()
+  void trigger_handler()
   {
+    if (!m_handler) { return; }
     m_handler(clock_t::now() - m_start, m_id);
   }
+
+  scoped_timer(scoped_timer&& other) { *this = std::move(other); }
+
+  scoped_timer& operator=(scoped_timer&& other)
+  {
+    trigger_handler();
+    m_handler = std::move(other.m_handler);
+    m_id = std::move(other.m_id);
+    m_start = std::move(other.m_start);
+    other.m_handler = nullptr;
+    return *this;
+  }
+
+  scoped_timer(scoped_timer const&) = delete;
+  scoped_timer& operator=(scoped_timer const&) = delete;
+
+  ~scoped_timer() { trigger_handler(); }
 
 private:
   time_handler        m_handler;

@@ -26,10 +26,7 @@ public:
     return *this;
   }
 
-  unique_file(unique_file&& other)
-  {
-    operator=(std::move(other));
-  }
+  unique_file(unique_file&& other) { operator=(std::move(other)); }
 
   unique_file(unique_file const&) = delete;
 
@@ -43,34 +40,38 @@ private:
   FILE* m_file;
 };
 
-class scoped_redirect
+template <typename Elem, typename T, typename Container = std::vector<Elem>>
+class scope_stack
 {
 public:
   static auto& stack()
   {
-    static auto paths = std::invoke([]
+    static auto s = std::invoke([]
     {
-      std::vector<unique_file> paths;
-      paths.emplace_back(stdout);
-      return paths;
+      Container c;
+      c.emplace_back(T::default_value());
+      return c;
     });
-    return paths;
+    return s;
   }
+
+  explicit scope_stack(Elem elem) { stack().emplace_back(std::move(elem)); }
+
+  ~scope_stack() { stack().pop_back(); }
+};
+
+class scoped_redirect : public scope_stack<unique_file, scoped_redirect>
+{
+public:
+  explicit scoped_redirect(unique_file f)
+    : scope_stack{std::move(f)}
+  {}
 
   explicit scoped_redirect(path const& p)
-  {
-    stack().emplace_back(p, "a");
-  }
+    : scope_stack{ unique_file{p, "a"} }
+  {}
 
-  explicit scoped_redirect(unique_file f)
-  {
-    stack().emplace_back(std::move(f));
-  }
-
-  ~scoped_redirect()
-  {
-    stack().pop_back();
-  }
+  static auto default_value() { return stdout; }
 };
   
 unique_file::~unique_file()
@@ -80,9 +81,7 @@ unique_file::~unique_file()
   for (auto const& item : scoped_redirect::stack())
   {
     if (item.handle() == m_file)
-    {
-      return;
-    }
+      { return; }
   }
 
   fclose(m_file); 
@@ -97,47 +96,29 @@ auto print(Args&&... args)
 template <typename... Args>
 auto println(Args&&... args)
 {
-  auto const r = print(std::forward<Args>(args)...);
-  printf("\n");
+  auto const r = print(std::forward<Args>(args)...); printf("\n");
   return r;
 }
 
-class scoped_failure_handler
+using failure_handler_t = std::function<void(char const* op)>;
+
+class scoped_failure_handler : public scope_stack<failure_handler_t, scoped_failure_handler>
 {
 public:
-  using failure_handler_t = std::function<void(char const* op)>;
-
-  static auto& stack()
-  {
-    static auto handlers = std::invoke([]
-    {
-      std::vector<failure_handler_t> handlers;
-      handlers.emplace_back([](auto const s)
-      {
-        println("'%s' failed", s);
-      });
-      return handlers;
-    });
-    return handlers;
-  }
-
   explicit scoped_failure_handler(failure_handler_t f)
-  {
-    stack().emplace_back(std::move(f));
-  }
+    : scope_stack{std::move(f)}
+  {}
 
-  ~scoped_failure_handler()
+  static auto default_value()
   {
-    stack().pop_back();
+    return [](auto const s) { println("'%s' failed", s); };
   }
 };
 
 void check(bool value, char const* op_name)
 {
-  if (!(value))
-  {
-    scoped_failure_handler::stack().back()(op_name);
-  }
+  if (!!(value)) { return; }
+  scoped_failure_handler::stack().back()(op_name);
 }
 
 } // namespace cct
