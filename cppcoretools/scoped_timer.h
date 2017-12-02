@@ -37,12 +37,12 @@ std::string to_string(Duration dur)
   auto ns = num_nanoseconds(dur) - num_microseconds(dur) * 1000;
 
   return std::string{ "" }
-    + (h ? std::to_string(h) + " hr(s) " : ""s)
-    + (m ? std::to_string(h) + " min(s) " : ""s)
-    + (s ? std::to_string(s) + " s " : ""s)
-    + (ms ? std::to_string(ms) + " ms " : ""s)
-    + (us ? std::to_string(us) + " us " : ""s)
-    + (ns ? std::to_string(ns) + " ns" : ""s);
+    + (h ? std::to_string(h) + "hr(s) " : ""s)
+    + (m ? std::to_string(h) + "min(s) " : ""s)
+    + (s ? std::to_string(s) + "s " : ""s)
+    + (ms ? std::to_string(ms) + "ms " : ""s)
+    + (us ? std::to_string(us) + "us " : ""s)
+    + (ns ? std::to_string(ns) + "ns" : ""s);
 }
 
 class scoped_timer

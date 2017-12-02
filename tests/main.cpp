@@ -20,10 +20,10 @@ void check_scoped_timer()
     std::abort();
   }};
 
-  CCT_CHECK(cct::to_string(1s) == "1 s ");
-  CCT_CHECK(cct::to_string(1s + 1ms) == "1 s 1 ms ");
-  CCT_CHECK(cct::to_string(14s + 3ms + 5ns) == "14 s 3 ms 5 ns");
-  CCT_CHECK(cct::to_string(2h + 3ms + 6ns) == "2 hr(s) 3 ms 6 ns");
+  CCT_CHECK(cct::to_string(1s) == "1s ");
+  CCT_CHECK(cct::to_string(1s + 1ms) == "1s 1ms ");
+  CCT_CHECK(cct::to_string(14s + 3ms + 5ns) == "14s 3ms 5ns");
+  CCT_CHECK(cct::to_string(2h + 3ms + 6ns) == "2hr(s) 3ms 6ns");
 }
 
 int main()
