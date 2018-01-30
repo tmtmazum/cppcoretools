@@ -34,6 +34,14 @@ public:
 
   ~unique_file();
 
+// public member functions:
+  auto puts(char const* str) { return ::fputs(str, m_file); }
+
+  template <typename... Args>
+  auto printf(Args&&... args) { return ::fprintf(m_file, std::forward<Args>(args)...); }
+
+  auto gets(char* str, int num) { return ::fgets(str, num, m_file); }
+
   auto handle() const noexcept { return m_file; }
 
 private:
@@ -74,7 +82,7 @@ public:
   static auto default_value() { return stdout; }
 };
   
-unique_file::~unique_file()
+inline unique_file::~unique_file()
 {
   if (!m_file) { return; }
 
@@ -115,7 +123,7 @@ public:
   }
 };
 
-void check(bool value, char const* op_name)
+inline void check(bool value, char const* op_name)
 {
   if (!!(value)) { return; }
   scoped_failure_handler::stack().back()(op_name);
