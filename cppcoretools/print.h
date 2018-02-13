@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include "error_and.h"
 
 namespace cct
 {
@@ -14,10 +15,6 @@ class unique_file
 {
 public:
   explicit unique_file(FILE* fi) : m_file{ fi } {}
-
-  unique_file(path filename, char const* mode)
-    : unique_file{fopen(filename.c_str(), mode)}
-  {}
 
   auto& operator=(unique_file&& other)
   {
@@ -44,9 +41,23 @@ public:
 
   auto handle() const noexcept { return m_file; }
 
+  auto getc() { return ::fgetc(m_file); }
+
+  auto eof() { return ::feof(m_file); }
+
 private:
   FILE* m_file;
 };
+
+inline auto make_unique_file(path filename, char const* mode)
+{
+    auto f = fopen(filename.c_str(), mode);
+    if (!f)
+    {
+        return error_and<unique_file>{std::error_code{ errno, std::system_category() }, nullptr};
+    }
+    return error_and<unique_file>{std::error_code{ errno, std::system_category() }, f};
+}
 
 template <typename Elem, typename T, typename Container = std::vector<Elem>>
 class scope_stack
@@ -76,7 +87,7 @@ public:
   {}
 
   explicit scoped_redirect(path const& p)
-    : scope_stack{ unique_file{p, "a"} }
+    : scope_stack{ make_unique_file(p, "a").value() }
   {}
 
   static auto default_value() { return stdout; }
